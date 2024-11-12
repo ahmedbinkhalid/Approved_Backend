@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Detail</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .blog-image {
+            max-height: 400px;
+            width: 100%;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+        .blog-content {
+            white-space: pre-wrap; /* To display line breaks */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4" id="blog-title">Blog Title</h1>
+    <div class="text-center">
+        <img src="" alt="Blog Image" class="blog-image" id="blog-image">
+    </div>
+    <div class="blog-content" id="blog-content">
+        <!-- Blog content will be injected here dynamically -->
+    </div>
+    <p class="text-muted text-right" id="blog-posted-time">Posted: </p>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Fetch and display blog details -->
+<script>
+    const blogId = window.location.pathname.split('/').pop(); // Extract blog ID from URL
+
+    fetch(`/api/blogs/${blogId}`)
+        .then(response => response.json())
+        .then(blog => {
+            document.getElementById('blog-title').innerText = blog.title;
+            document.getElementById('blog-image').src = blog.images[0];
+            document.getElementById('blog-content').innerText = blog.content;
+            document.getElementById('blog-posted-time').innerText = `Posted: ${blog.timeAgo}`;
+        })
+        .catch(error => console.error('Error fetching blog details:', error));
+</script>
+
+</body>
+</html>
+

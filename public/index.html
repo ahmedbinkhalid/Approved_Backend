@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My App</title>
+    <script>
+        async function searchCars(event) {
+            event.preventDefault(); // Prevent form from reloading the page
+            
+            // Get form values
+            const city = document.getElementById("city").value;
+            const status = document.getElementById("status").value;
+            const minPrice = document.getElementById("minPrice").value;
+            const maxPrice = document.getElementById("maxPrice").value;
+
+            // Create the query string for the API call
+            let queryString = '/api/cars/search?';
+            if (city) queryString += `city=${city}&`;
+            if (status) queryString += `status=${status}&`;
+            if (minPrice) queryString += `minPrice=${minPrice}&`;
+            if (maxPrice) queryString += `maxPrice=${maxPrice}&`;
+
+            // Send GET request to the API
+            const response = await fetch(queryString, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            // Parse the JSON response
+            const cars = await response.json();
+
+            // Display the search results
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (cars.length > 0) {
+                cars.forEach(car => {
+                    resultsDiv.innerHTML += `
+                        <div>
+                            <h3>${car.make} ${car.model} (${car.year})</h3>
+                            <p>Location: ${car.location}</p>
+                            <p>Price: ${car.price}</p>
+                            <p>Status: ${car.status}</p>
+                            <p>Mileage: ${car.mileage}</p>
+                            <p>Description: ${car.description}</p>
+                            <hr/>
+                        </div>
+                    `;
+                });
+            } else {
+                resultsDiv.innerHTML = '<p>No cars found matching your criteria.</p>';
+            }
+        }
+    </script>
+  </head>
+  <body>
+    <h1>Welcome to My App</h1>
+    <a href="http://localhost:3000/api/auth/google">Login with Google</a>
+    <a href="http://localhost:3000/api/usedcars">Used cars</a>
+    <a href="http://localhost:3000/api/bankcars">Bank released cars</a>
+    
+  </body>
+</html>

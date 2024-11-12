@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Counts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .count {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Visitor Counts</h1>
+    
+    <div class="count">
+        <h2>Live Visitors: <span id="liveVisitors">0</span></h2>
+    </div>
+    
+    <div class="count">
+        <h2>Daily Visitors: <span id="dailyVisitors">0</span></h2>
+    </div>
+
+    <div class="count">
+        <h2>Weekly Visitors: <span id="weeklyVisitors">0</span></h2>
+    </div>
+
+    <div class="count">
+        <h2>Monthly Visitors: <span id="monthlyVisitors">0</span></h2>
+    </div>
+
+    <script>
+        async function fetchLiveVisitors() {
+            const response = await fetch('/api/live');
+            const data = await response.json();
+            document.getElementById('liveVisitors').innerText = data.liveVisitors || 0;
+        }
+
+        async function fetchDailyVisitors() {
+            const response = await fetch('/api/daily');
+            const data = await response.json();
+            document.getElementById('dailyVisitors').innerText = data.dailyVisitors || 0;
+        }
+
+        async function fetchWeeklyVisitors() {
+            const response = await fetch('/api/weekly');
+            const data = await response.json();
+            document.getElementById('weeklyVisitors').innerText = data.weeklyVisitors || 0;
+        }
+
+        async function fetchMonthlyVisitors() {
+            const response = await fetch('/api/monthly');
+            const data = await response.json();
+            document.getElementById('monthlyVisitors').innerText = data.monthlyVisitors || 0;
+        }
+
+        // Fetch all visitor counts when the page loads and every 5 seconds
+        function fetchVisitorCounts() {
+            fetchLiveVisitors();
+            fetchDailyVisitors();
+            fetchWeeklyVisitors();
+            fetchMonthlyVisitors();
+        }
+
+        // Call fetchVisitorCounts every 5 seconds
+        window.onload = () => {
+            fetchVisitorCounts();
+            setInterval(fetchVisitorCounts, 5); // Update counts every 5 seconds
+        };
+    </script>
+</body>
+</html>
+
