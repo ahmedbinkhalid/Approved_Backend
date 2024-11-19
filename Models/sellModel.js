@@ -45,6 +45,7 @@ exports.getCarsByOwnerId = async (db, owner)=>{
         throw new Error('Error retrieving cars by owner id: ', error.message);
     }
 };
+
 // Get delete cars by carId 
 exports.deleteCar = async (db, carId)=>{
     try{
