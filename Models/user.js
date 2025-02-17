@@ -50,15 +50,23 @@ const userSchema = new mongoose.Schema({
     friends: [
         {
             userId : mongoose.Schema.Types.ObjectId,
-            userName: String
+            userName: String,
+            profilePicture: String
         }
     ],
     subscribedCoaches: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Users' // Reference to the Users model
+            ref: 'Users', // Reference to the Users model
+            userName: String,
+            profilePicture: String
         }
     ],
+    status: {
+        type: String,
+        enum: ['active', 'blocked'],
+        default: 'active',
+    },
 });
 
 userSchema.statics.emailExists = async (email)=>{

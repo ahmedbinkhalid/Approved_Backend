@@ -26,7 +26,7 @@ exports.createGame = async (req, res) => {
 // Get all games created by the coach
 exports.getGames = async (req, res) => {
     try {
-        const games = await Game.find({ createdBy: req.user.id }).populate('playlists');
+        const games = await Game.find({ createdBy: req.user.id }).sort({ createdAt: -1}).populate('playlists');
         res.status(200).json({ games });
     } catch (error) {
         console.error('Error fetching games:', error);

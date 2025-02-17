@@ -10,7 +10,7 @@ exports.getCoachStatistics = async (req, res) => {
 
     try {
         // Fetch the coach's details
-        const coach = await User.findById(coachId).select('userName email'); // Select only username and email
+        const coach = await User.findById(coachId).select('userName email profilePicture'); // Select only username and email
 
         if (!coach) {
             return res.status(404).json({ message: 'Coach not found.' });
@@ -38,6 +38,7 @@ exports.getCoachStatistics = async (req, res) => {
         res.status(200).json({
             userName: coach.userName,
             email: coach.email,
+            profilePicture: coach.profilePicture,
             subscriberCount,
             gameCount,
             playlistCount,
@@ -53,7 +54,6 @@ exports.getCoachStatistics = async (req, res) => {
 // Get a list of subscribers for the logged-in coach
 exports.getSubscribersList = async (req, res) => {
     const coachId = req.user.id; // Get the logged-in coach's ID
-
     try {
         // Find all users who are subscribed to this coach
         const subscribers = await User.find({ subscribedCoaches: coachId }).select('userName email');

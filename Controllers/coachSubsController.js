@@ -16,7 +16,6 @@ const JWT_SECRET = process.env.secretKey;
 exports.subscribeToCoach = async (req, res) => {
     const userId = req.user.id; // Get the logged-in user's ID
     const { coachId } = req.body; // Get the coach ID from the request body
-  
     try {
         const user = await userModel.findById(userId);
         if (!user) {
@@ -44,6 +43,8 @@ exports.subscribeToCoach = async (req, res) => {
     const userId = req.user.id; // Get the logged-in user's ID
     const { coachId } = req.body; // Get the coach ID from the request body
   
+    console.log("User Id : ",userId );
+    console.log(" coach Id : ",coachId);
     try {
         const user = await userModel.findById(userId);
         if (!user) {
@@ -68,6 +69,7 @@ exports.subscribeToCoach = async (req, res) => {
   
   // Get list of subscribed coaches
   exports.getSubscribedCoaches = async (req, res) => {
+    console.log(req.body);
     const userId = req.user.id; // Get the logged-in user's ID
   
     try {
@@ -85,6 +87,7 @@ exports.subscribeToCoach = async (req, res) => {
   
   // Get all coaches
   exports.getAllCoaches = async (req, res) => {
+    console.log(req);
     try {
         const coaches = await userModel.find({ role: 'coach' }, 'userName email profilePicture'); // Fetch only coaches
         res.status(200).json({ coaches });

@@ -17,7 +17,6 @@ exports.saveMessage = async (senderId, receiverId, message) => {
 exports.getChatHistory = async (req, res) => {
   const { friendId } = req.params;
   const userId = req.user.id;
-
   try {
     const chats = await Chat.find({
       $or: [

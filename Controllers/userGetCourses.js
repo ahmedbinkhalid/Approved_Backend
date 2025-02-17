@@ -29,6 +29,8 @@ exports.getCoursesFromSubscribedCoaches = async (req, res) => {
             thumbnail: game.thumbnail,
         }));
 
+        // console.log("formated courses : ", formattedCourses);
+
         res.status(200).json({ courses: formattedCourses });
     } catch (error) {
         console.error('Error fetching courses:', error);
