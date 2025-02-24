@@ -3,6 +3,9 @@ const Game = require('../Models/game');
 
 const Sponsorship = require('../Models/sponsorship');
 const Advertisement = require('../Models/advertisement');
+
+const AdvertisementRequest = require('../Models/advertisementRequest'); // Adjust path if needed
+const SponsorshipRequest = require('../Models/SponsorshipRequest'); // Adjust path if needed
 const mongoose = require('mongoose');
 
 // Get all users (Players and Coaches)
@@ -110,7 +113,7 @@ exports.unblockUser = async (req, res, next)=>{
 exports.getCoachDetails = async (req, res, next)=>{
     try{
         const { coachId } = req.params;
-        const coach = await User.findById(coachId).populate('subscribedCoaches');
+        const coach = await User.findById(coachId).populate('subscribedCoaches').select('-password');
 
         if(!coach || coach.role !=='coach'){
             return res.status(404).json({message: 'Coach not found'});
@@ -131,7 +134,7 @@ exports.getCoachDetails = async (req, res, next)=>{
 exports.getPlayerDetails = async (req, res, next)=>{
     try{
         const {playerId} = req.params;
-        const player = await User.findById(playerId).populate('subscribedCoaches');
+        const player = await User.findById(playerId).populate('subscribedCoaches').select('-password');
 
         if(!player || player.role !== 'user'){
             return res.status(404).json({message: 'Player not found'});
@@ -178,6 +181,22 @@ exports.getSponsorshipTiers = async (req, res) => {
         res.status(200).json({ sponsorships });
     } catch (error) {
         res.status(500).json({ message: "Error fetching sponsorship tiers" });
+    }
+};
+
+// Get Sponsorship Tier by ID
+exports.getSponsorshipTierById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const sponsorship = await Sponsorship.findById(id);
+
+        if (!sponsorship) {
+            return res.status(404).json({ message: "Sponsorship tier not found" });
+        }
+
+        res.status(200).json({ sponsorship });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching sponsorship tier" });
     }
 };
 
@@ -258,16 +277,18 @@ exports.deleteSponsorship = async (req, res) => {
 
 
 
+
 exports.getAdminProfile = async (req, res) => {
     try {
         const adminId = req.user.id; // Assuming you have middleware that adds user info to req
-        
+
         const admin = await User.findById(adminId).select('email userName profilePicture role');
         
         if (!admin || admin.role !== 'admin') {
             return res.status(403).json({ message: 'Access denied. Admin only.' });
         }
 
+        // Aggregation for user and coach counts
         const aggregation = await User.aggregate([
             {
                 $group: {
@@ -283,6 +304,12 @@ exports.getAdminProfile = async (req, res) => {
             if (item._id === 'coach') totalCoaches = item.count;
         });
 
+        // Count total advertisement requests
+        const totalAdvertisementRequests = await AdvertisementRequest.countDocuments();
+
+        // Count total sponsorship requests
+        const totalSponsorshipRequests = await SponsorshipRequest.countDocuments();
+
         res.json({
             adminProfile: {
                 email: admin.email,
@@ -291,7 +318,9 @@ exports.getAdminProfile = async (req, res) => {
             },
             stats: {
                 totalUsers,
-                totalCoaches
+                totalCoaches,
+                totalAdvertisementRequests,
+                totalSponsorshipRequests
             }
         });
     } catch (error) {
@@ -299,3 +328,45 @@ exports.getAdminProfile = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+// exports.getAdminProfile = async (req, res) => {
+//     try {
+//         const adminId = req.user.id; // Assuming you have middleware that adds user info to req
+        
+//         const admin = await User.findById(adminId).select('email userName profilePicture role');
+        
+//         if (!admin || admin.role !== 'admin') {
+//             return res.status(403).json({ message: 'Access denied. Admin only.' });
+//         }
+
+//         const aggregation = await User.aggregate([
+//             {
+//                 $group: {
+//                     _id: "$role",
+//                     count: { $sum: 1 }
+//                 }
+//             }
+//         ]);
+
+//         let totalUsers = 0, totalCoaches = 0;
+//         aggregation.forEach(item => {
+//             if (item._id === 'user') totalUsers = item.count;
+//             if (item._id === 'coach') totalCoaches = item.count;
+//         });
+
+//         res.json({
+//             adminProfile: {
+//                 email: admin.email,
+//                 userName: admin.userName,
+//                 profilePicture: admin.profilePicture
+//             },
+//             stats: {
+//                 totalUsers,
+//                 totalCoaches
+//             }
+//         });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// };

@@ -21,6 +21,14 @@ const gameSchema = new mongoose.Schema({
         ref: 'Users', // Reference to the Users model (the coach)
         required: true,
     },
+    status: {
+        type: String,
+        enum: ['public', 'private'],
+        default: 'public',
+    },
+    price:{
+        type: String,
+    },
     playlists: [
         {
             type: mongoose.Schema.Types.ObjectId,

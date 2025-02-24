@@ -2,14 +2,23 @@
 const Chat = require("../Models/chat"); // Import Chat model
 
 // Save a new chat message (used in both API and Socket.IO)
-exports.saveMessage = async (senderId, receiverId, message) => {
+exports.saveMessage = async (data) => {
   try {
-    const newChat = new Chat({ senderId, receiverId, message });
-    await newChat.save();
-    return newChat;
+      const { senderId, receiverId, message } = data; // Ensure field names match schema
+
+      if (!senderId || !receiverId || !message.trim()) {
+          console.error("Invalid message data:", data);
+          return { error: "Invalid message data" };
+      }
+
+      const newMessage = new Chat({ senderId, receiverId, message });
+      await newMessage.save();
+
+      console.log("Message successfully saved:", newMessage);
+      return newMessage; // Return saved message to send back
   } catch (error) {
-    console.error("Error saving message:", error);
-    return null;
+      console.error("Error saving message:", error);
+      return { error: "Failed to save message" };
   }
 };
 

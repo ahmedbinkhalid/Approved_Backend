@@ -63,6 +63,9 @@ exports.login = async (req, res, next)=>{
         if(!user){
             return res.status(400).json({message: "User does not exits, please signup"});
         }
+        if(user.status === "blocked"){
+            return res.status(400).json({message: "Your account has been Blocked 😞"});
+        }
         // compare the password with the hashed password 
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -71,7 +74,7 @@ exports.login = async (req, res, next)=>{
         }
 
         // Create a JWT token
-        const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '10h' });
+        const token = jwt.sign({ id: user._id, email: user.email, role: user.role, profilePicture: user.profilePicture }, JWT_SECRET, { expiresIn: '10h' });
 
         // Send success response with token
         res.status(200).json({ message: 'Login successful', token });

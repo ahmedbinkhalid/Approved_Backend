@@ -13,6 +13,89 @@ require('dotenv').config();
 const JWT_SECRET = process.env.secretKey;
 
 // Save profile picture (only in settings)
+// exports.saveProfilePicture = async (req, res) => {
+//     const userId = req.user.id;
+//     try {
+//         if (!req.file) {
+//             return res.status(400).json({ message: "No file uploaded." });
+//         }
+
+//         const user = await userModel.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found." });
+//         }
+
+//         // If the user already has a profile picture, delete it from S3
+//         if (user.profilePicture) {
+//             const oldPictureKey = user.profilePicture.split('/').pop(); // Extract the file name
+//             const deleteParams = {
+//                 Bucket: process.env.AWS_BUCKET_NAME,
+//                 Key: `videos/${oldPictureKey}`, // Ensure correct S3 key structure
+//             };
+//             const deleteCommand = new DeleteObjectCommand(deleteParams); // Create the delete command
+//             await s3.send(deleteCommand); // Corrected method call
+//         }
+
+//         // Save the new profile picture URL in the database
+//         user.profilePicture = req.file.location; // Save the S3 URL
+//         await user.save();
+
+//         res.status(200).json({ message: "Profile picture updated successfully.", profilePicture: user.profilePicture });
+//     } catch (error) {
+//         console.error("Error saving profile picture:", error);
+//         res.status(500).json({ message: "Failed to update profile picture." });
+//     }
+// };
+
+// exports.saveProfilePicture = async (req, res) => {
+//     const userId = req.user.id;
+//     try {
+//         if (!req.file) {
+//             return res.status(400).json({ message: "No file uploaded." });
+//         }
+
+//         const user = await userModel.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({ message: "User not found." });
+//         }
+
+//         // If the user already has a profile picture, delete it from S3
+//         if (user.profilePicture) {
+//             const oldPictureKey = user.profilePicture.split('/').pop(); // Extract the file name
+//             const deleteParams = {
+//                 Bucket: process.env.AWS_BUCKET_NAME,
+//                 Key: `videos/${oldPictureKey}`, // Ensure correct S3 key structure
+//             };
+//             const deleteCommand = new DeleteObjectCommand(deleteParams); // Create the delete command
+//             await s3.send(deleteCommand); // Corrected method call
+//         }
+
+//         // Save the new profile picture URL in the database
+//         const newProfilePicture = req.file.location;
+//         user.profilePicture = newProfilePicture;
+//         await user.save();
+
+//         // Update profile picture in friends and subscribedCoaches lists
+//         await userModel.updateMany(
+//             { "friends.userId": userId },
+//             { $set: { "friends.$[elem].profilePicture": newProfilePicture } },
+//             { arrayFilters: [{ "elem.userId": userId }] }
+//         );
+
+//         await userModel.updateMany(
+//             { "subscribedCoaches": userId },
+//             { $set: { "subscribedCoaches.$[elem].profilePicture": newProfilePicture } },
+//             { arrayFilters: [{ "elem.userId": userId }] }
+//         );
+
+//         res.status(200).json({ message: "Profile picture updated successfully.", profilePicture: newProfilePicture });
+
+//     } catch (error) {
+//         console.error("Error saving profile picture:", error);
+//         res.status(500).json({ message: "Failed to update profile picture." });
+//     }
+// };
+
 exports.saveProfilePicture = async (req, res) => {
     const userId = req.user.id;
     try {
@@ -26,27 +109,41 @@ exports.saveProfilePicture = async (req, res) => {
         }
 
         // If the user already has a profile picture, delete it from S3
-        if (user.profilePicture) {
-            const oldPictureKey = user.profilePicture.split('/').pop(); // Extract the file name
+        if (user.profilePicture && user.profilePicture !== "defaultProfilePic.jpg") {
+            const oldPictureKey = user.profilePicture.split('/').pop(); // Extract file name
             const deleteParams = {
                 Bucket: process.env.AWS_BUCKET_NAME,
-                Key: `videos/${oldPictureKey}`, // Ensure correct S3 key structure
+                Key: `profile_pictures/${oldPictureKey}`, // Adjust if necessary
             };
-            const deleteCommand = new DeleteObjectCommand(deleteParams); // Create the delete command
-            await s3.send(deleteCommand); // Corrected method call
+            const deleteCommand = new DeleteObjectCommand(deleteParams);
+            await s3.send(deleteCommand);
         }
 
         // Save the new profile picture URL in the database
-        user.profilePicture = req.file.location; // Save the S3 URL
+        const newProfilePicture = req.file.location;
+        user.profilePicture = newProfilePicture;
         await user.save();
 
-        res.status(200).json({ message: "Profile picture updated successfully.", profilePicture: user.profilePicture });
+        // Update profile picture in friends and subscribedCoaches lists
+        await userModel.updateMany(
+            { "friends.userId": userId },
+            { $set: { "friends.$[elem].profilePicture": newProfilePicture } },
+            { arrayFilters: [{ "elem.userId": userId }] }
+        );
+
+        await userModel.updateMany(
+            { "subscribedCoaches._id": userId },
+            { $set: { "subscribedCoaches.$[elem].profilePicture": newProfilePicture } },
+            { arrayFilters: [{ "elem._id": userId }] }
+        );
+
+        res.status(200).json({ message: "Profile picture updated successfully.", profilePicture: newProfilePicture });
+
     } catch (error) {
         console.error("Error saving profile picture:", error);
         res.status(500).json({ message: "Failed to update profile picture." });
     }
 };
-
 // Get user settings (including profile picture, username, and email)
 exports.getUserSettings = async (req, res) => {
     const userId = req.user.id;

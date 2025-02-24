@@ -17,8 +17,10 @@ exports.getCoachStatistics = async (req, res) => {
         }
 
         // Count the number of subscribers
-        const subscriberCount = await User.countDocuments({ subscribedCoaches: coachId });
-
+        // const subscriberCount = await User.countDocuments({ subscribedCoaches: coachId });
+        const subscriberCount = await User.countDocuments({
+            subscribedCoaches: { $elemMatch: { _id: coachId } }
+        });
         // Count the number of games created by the coach
         const gameCount = await Game.countDocuments({ createdBy: coachId });
 
@@ -56,8 +58,11 @@ exports.getSubscribersList = async (req, res) => {
     const coachId = req.user.id; // Get the logged-in coach's ID
     try {
         // Find all users who are subscribed to this coach
-        const subscribers = await User.find({ subscribedCoaches: coachId }).select('userName email');
-
+        // const subscribers = await User.find({ subscribedCoaches: coachId }).select('userName email');
+        const subscribers = await User.find({
+            subscribedCoaches: { $elemMatch: { _id: coachId } }
+        }).select('userName email profilePicture');
+        
         // Count the number of subscribers
         const subscriberCount = subscribers.length;
 

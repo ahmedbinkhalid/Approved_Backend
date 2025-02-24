@@ -20,6 +20,9 @@ router.get('/player/:playerId', authMiddleware,adminController.getPlayerDetails)
 // Sponsorship Management //  Tier System
 router.post('/sponsorship', authMiddleware, upload.single('image'), adminController.uploadSponsorshipTier);
 router.get('/get-sponsorship', authMiddleware, adminController.getSponsorshipTiers);
+router.get("/get-sponsorship/:id", adminController.getSponsorshipTierById); //for detailed view
+
+
 // Delete Sponsorship by ID
 router.delete('/delete-sponsorship/:id', authMiddleware, adminController.deleteSponsorship);
 
@@ -27,11 +30,11 @@ router.delete('/delete-sponsorship/:id', authMiddleware, adminController.deleteS
 router.post('/advertisement', authMiddleware, upload.single('image'), adminController.uploadAdvertisement);
 router.get('/get-advertisement', authMiddleware, adminController.getAdvertisements); // for user
 router.get('/get-coachAdvertisement', authMiddleware, adminController.getAdvertisementsCoach); // for coach
+
 // Delete Advertisement by ID (Only from Database)
 router.delete('/delete-advertisement/:id',authMiddleware ,adminController.deleteAdvertisement);
 
 // get Profile data
-
 router.get('/get-profile', authMiddleware, adminController.getAdminProfile);
 
 module.exports = router;

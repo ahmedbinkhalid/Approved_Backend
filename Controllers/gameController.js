@@ -5,13 +5,15 @@ const Playlist = require('../Models/playlist');
 
 // Create a new game
 exports.createGame = async (req, res) => {
-    const { title, description } = req.body;
+    const { title, description, status, price } = req.body;
     const thumbnail = req.file.location; // Get the thumbnail URL from S3
     try {
         const newGame = new Game({
             title,
             description,
             thumbnail,
+            status,
+            price,
             createdBy: req.user.id, // Assuming req.user contains the logged-in user's info
         });
 
@@ -26,13 +28,23 @@ exports.createGame = async (req, res) => {
 // Get all games created by the coach
 exports.getGames = async (req, res) => {
     try {
-        const games = await Game.find({ createdBy: req.user.id }).sort({ createdAt: -1}).populate('playlists');
+        const games = await Game.find({ createdBy: req.user.id}).sort({ createdAt: -1}).populate('playlists');
         res.status(200).json({ games });
     } catch (error) {
         console.error('Error fetching games:', error);
         res.status(500).json({ message: 'Failed to fetch games.' });
     }
 };
+
+// exports.getGamesPrivate = async (req, res) => {
+//     try {
+//         const games = await Game.find({ createdBy: req.user.id, status:'private' }).sort({ createdAt: -1});
+//         res.status(200).json({ games });
+//     } catch (error) {
+//         console.error('Error fetching games:', error);
+//         res.status(500).json({ message: 'Failed to fetch games.' });
+//     }
+// };
 
 // Get a specific game by ID
 exports.getGameById = async (req, res) => {
@@ -50,12 +62,19 @@ exports.getGameById = async (req, res) => {
     }
 };
 
-// Create a new playlist under a game
+const mongoose = require('mongoose');
+
 exports.createPlaylist = async (req, res) => {
     const { title } = req.body;
-    const { gameId } = req.params;
+    let { gameId } = req.params;
 
     try {
+        // Trim any spaces and validate ObjectId
+        gameId = gameId.trim();
+        if (!mongoose.Types.ObjectId.isValid(gameId)) {
+            return res.status(400).json({ message: 'Invalid game ID format' });
+        }
+
         const newPlaylist = new Playlist({
             title,
             game: gameId,
@@ -72,6 +91,30 @@ exports.createPlaylist = async (req, res) => {
         res.status(500).json({ message: 'Failed to create playlist.' });
     }
 };
+
+
+// Create a new playlist under a game
+// exports.createPlaylist = async (req, res) => {
+//     const { title } = req.body;
+//     const { gameId } = req.params;
+
+//     try {
+//         const newPlaylist = new Playlist({
+//             title,
+//             game: gameId,
+//         });
+
+//         await newPlaylist.save();
+
+//         // Update the game to include the new playlist
+//         await Game.findByIdAndUpdate(gameId, { $push: { playlists: newPlaylist._id } });
+
+//         res.status(201).json({ message: 'Playlist created successfully', playlist: newPlaylist });
+//     } catch (error) {
+//         console.error('Error creating playlist:', error);
+//         res.status(500).json({ message: 'Failed to create playlist.' });
+//     }
+// };
 
 exports.addVideoToPlaylist = async (req, res) => {
     const { title } = req.body;
@@ -129,3 +172,4 @@ exports.getPlaylistsInGame = async (req, res) => {
         res.status(500).json({ message: 'Failed to fetch playlists.' });
     }
 };
+

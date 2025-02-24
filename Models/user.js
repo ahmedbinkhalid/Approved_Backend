@@ -43,25 +43,37 @@ const userSchema = new mongoose.Schema({
 
     friendRequests: [
         {
-            userId : mongoose.Schema.Types.ObjectId,
+            userId : { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
             userName: String,
         }
     ],
     friends: [
         {
-            userId : mongoose.Schema.Types.ObjectId,
+            userId : { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
             userName: String,
             profilePicture: String
         }
     ],
     subscribedCoaches: [
+    {
+        _id: mongoose.Schema.Types.ObjectId, // Store the coach ID
+        userName: String,
+        profilePicture: String
+    }
+]
+,
+    purchasedGames: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Users', // Reference to the Users model
-            userName: String,
-            profilePicture: String
+            ref: 'Game'
         }
     ],
+    joinedCommunities: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Community"
+        }
+      ],
     status: {
         type: String,
         enum: ['active', 'blocked'],

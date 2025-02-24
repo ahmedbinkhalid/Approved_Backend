@@ -12,6 +12,10 @@ router.post('/games', authMiddleware, upload.single('thumbnail'), gameController
 // Get all games
 router.get('/get-games', authMiddleware, gameController.getGames);
 
+// Get Private Games
+
+// router.get('/get-privateGames', authMiddleware, gameController.getGamesPrivate);
+
 // Get a specific game by ID
 router.get('/games/:gameId', authMiddleware, gameController.getGameById);
 
