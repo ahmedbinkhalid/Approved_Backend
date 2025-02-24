@@ -44,7 +44,8 @@ const userSchema = new mongoose.Schema({
     friendRequests: [
         {
             userId : { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
-            userName: String,
+            userName: {type: String},
+            profilePicture: {type: String, required: true},
         }
     ],
     friends: [

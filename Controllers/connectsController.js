@@ -1,12 +1,46 @@
 const userModel = require('../Models/user');
 
+// exports.getAllUser = async (req, res, next) => {
+//     try {
+//         const users = await userModel.find({
+//             role: 'user',
+//             _id: { $ne: req.user.id } // Exclude the logged-in user
+//         }).select("-password");
+        
+//         res.json(users);
+//     } catch (error) {
+//         console.error("Error getting users:", error);
+//         res.status(500).json({ message: "Failed to get users." });
+//     }
+// };
+
 exports.getAllUser = async (req, res, next) => {
     try {
+        // Get the logged-in user details
+        const loggedInUser = await userModel.findById(req.user.id);
+
+        if (!loggedInUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Find all users to whom the logged-in user has sent a friend request
+        const sentFriendRequests = await userModel.find({
+            "friendRequests.userId": req.user.id
+        }).select("_id"); // Only get the _id of those users
+
+        // Extract IDs of users to exclude
+        const excludedUserIds = [
+            req.user.id, // Exclude the logged-in user
+            ...loggedInUser.friends.map(friend => friend.userId.toString()), // Exclude friends
+            ...sentFriendRequests.map(request => request._id.toString()) // Exclude users who received a request from the logged-in user
+        ];
+
+        // Find users who are not in the excluded list
         const users = await userModel.find({
             role: 'user',
-            _id: { $ne: req.user.id } // Exclude the logged-in user
+            _id: { $nin: excludedUserIds }
         }).select("-password");
-        
+
         res.json(users);
     } catch (error) {
         console.error("Error getting users:", error);
@@ -14,11 +48,12 @@ exports.getAllUser = async (req, res, next) => {
     }
 };
 
-
 exports.sendFriendRequest = async (req, res, next) => {
     const { toUserId } = req.body;
     const fromUserId = req.user.id;
     const fromUserName = req.user.userName;
+    const profilePicture = req.user.profilePicture;
+    console.log(req.user.profilePicture)
 
     try {
         const toUser = await userModel.findById(toUserId);
@@ -48,7 +83,7 @@ exports.sendFriendRequest = async (req, res, next) => {
 
         // Send friend request using atomic update (prevent race conditions)
         await userModel.findByIdAndUpdate(toUserId, {
-            $push: { friendRequests: { userId: fromUserId, userName: fromUserName } }
+            $push: { friendRequests: { userId: fromUserId, userName: fromUserName, profilePicture: profilePicture } }
         });
 
         res.status(200).json({ message: 'Friend Request Sent Successfully' });
@@ -212,6 +247,7 @@ exports.viewFriendRequests = async (req, res, next) => {
     const userId = req.user.id;
     try {
         const user = await userModel.findById(userId);
+        console.log(user);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }

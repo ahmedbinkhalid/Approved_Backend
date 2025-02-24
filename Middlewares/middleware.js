@@ -33,6 +33,7 @@ authMiddleware = async (req, res, next) => {
       email: user.email,
       userName: user.userName,
       role: user.role,
+      profilePicture: user.profilePicture
     };
 
     next(); // Proceed to the next middleware or controller

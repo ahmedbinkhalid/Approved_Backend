@@ -61,7 +61,7 @@ exports.getSubscribersList = async (req, res) => {
         // const subscribers = await User.find({ subscribedCoaches: coachId }).select('userName email');
         const subscribers = await User.find({
             subscribedCoaches: { $elemMatch: { _id: coachId } }
-        }).select('userName email profilePicture');
+        }).select('userName email');
         
         // Count the number of subscribers
         const subscriberCount = subscribers.length;

@@ -214,14 +214,25 @@ exports.unsubscribeFromCoach = async (req, res) => {
     }
   };
   
-  // Get all coaches
-  exports.getAllCoaches = async (req, res) => {
-    console.log(req);
+
+// Get all coaches the user has not subscribed to
+exports.getAllCoaches = async (req, res) => {
     try {
-        const coaches = await userModel.find({ role: 'coach' }, 'userName email profilePicture'); // Fetch only coaches
+        const loggedInUser = await userModel.findById(req.user.id).select('subscribedCoaches');
+        if (!loggedInUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const subscribedCoachIds = loggedInUser.subscribedCoaches.map(coach => coach._id);
+
+        const coaches = await userModel.find(
+            { role: 'coach', _id: { $nin: subscribedCoachIds } }, // Exclude subscribed coaches
+            'userName email profilePicture'
+        );
+
         res.status(200).json({ coaches });
     } catch (error) {
         console.error("Error fetching coaches:", error);
         res.status(500).json({ message: "Server error. Please try again later." });
     }
-  };
+};

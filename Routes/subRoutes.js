@@ -15,6 +15,6 @@ router.post('/unsubscribe', authMiddleware, coachSubsController.unsubscribeFromC
 router.get('/subscribed-coaches', authMiddleware, coachSubsController.getSubscribedCoaches);
 
 // Get all coaches
-router.get('/coaches', coachSubsController.getAllCoaches);
+router.get('/coaches', authMiddleware,coachSubsController.getAllCoaches);
 
 module.exports = router;
