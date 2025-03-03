@@ -31,4 +31,7 @@ router.post('/playlists/:playlistId/videos', authMiddleware, upload.single('vide
 // Get videos under a specific playlist
 router.get('/playlists/:playlistId/get-videos', authMiddleware, gameController.getVideosInPlaylist);
 
+// Delete a game by ID
+router.delete('/games/:gameId', authMiddleware, gameController.deleteGame);
+
 module.exports = router;

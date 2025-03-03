@@ -8,6 +8,8 @@ const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 require("dotenv").config();
 
+const appointment = require("./Routes/appointmentRoutes");
+const searchRouter = require("./Routes/search");
 const Community = require("./Models/community");
 const communityChat = require("./Models/communityChat");
 const Chat = require("./Models/chat");
@@ -45,40 +47,8 @@ io.on("connection", (socket) => {
   // Store user socket
   socket.on("join", (userId) => {
     onlineUsers.set(userId, socket.id);
-    console.log(`User ${userId} connected`);
+    console.log(`User ${userId} and ${socket.id} connected`);
   });
-
-  // Handle private messages
-//   socket.on("sendMessage", async (data) => {
-//     console.log("Received message data:", data); // Debugging
-
-//     try {
-//         const { senderId, receiverId, content } = data; // Fix: Extract 'content'
-//         const message = content; // Fix: Assign 'content' to 'message'
-        
-//         if (!message || message.trim() === "") {
-//             return socket.emit("errorMessage", { error: "Message content is required" });
-//         }
-
-//         const newMessage = new Chat({ senderId, receiverId, message }); // Use 'message'
-//         await newMessage.save();
-
-//         console.log("Message saved:", newMessage);
-
-//         // Find receiver socket
-//         const receiverSocketId = onlineUsers.get(receiverId);
-//         if (receiverSocketId) {
-//             io.to(receiverSocketId).emit("newMessage", newMessage);
-//         }
-
-//         // Send message to the sender as well
-//         socket.emit("newMessage", newMessage);
-
-//     } catch (error) {
-//         console.error("Error saving message:", error);
-//         socket.emit("errorMessage", { error: "Failed to save message" });
-//     }
-// });
 
 socket.on("sendMessage", async (data) => {
   console.log("📩 Received message data:", data); // Debugging log
@@ -110,24 +80,55 @@ socket.on("sendMessage", async (data) => {
       socket.emit("errorMessage", { error: "Failed to save message" });
   }
 });
-  // Handle community messages
-  socket.on("sendCommunityMessage", async ({ communityId, senderId, senderName, message }) => {
-    try {
-      const newMessage = new communityChat({ communityId, senderId, senderName, message });
-      await newMessage.save();
 
-      const communityMembers = await Community.findById(communityId).populate("members.userId");
-      communityMembers.members.forEach(member => {
-        const memberSocketId = onlineUsers.get(member.userId._id.toString());
-        if (memberSocketId) {
-          io.to(memberSocketId).emit("receiveCommunityMessage", { senderId, senderName, message });
-        }
+socket.on("sendCommunityMessage", async ({ communityId, senderId, senderName, message }) => {
+  try {
+      if (!message || message.trim() === "") {
+          return socket.emit("errorMessage", { error: "Message content is required" });
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(senderId) || !mongoose.Types.ObjectId.isValid(communityId)) {
+          return socket.emit("errorMessage", { error: "Invalid sender or community ID" });
+      }
+
+      // Save message in database
+      const newMessage = new communityChat({
+          communityId,
+          senderId: new mongoose.Types.ObjectId(senderId),
+          senderName,
+          message,
       });
-    } catch (error) {
-      console.error("Error handling community message:", error);
-    }
-  });
 
+      await newMessage.save();
+      console.log("✅ New community message saved:", newMessage);
+
+      // Fetch community members
+      const community = await Community.findById(communityId).populate("members.userId");
+
+      if (!community) {
+          return socket.emit("errorMessage", { error: "Community not found" });
+      }
+
+      console.log("👥 Community Members:", community.members);
+
+      // Emit message to all online community members
+      community.members.forEach(member => {
+          if (member.userId) { 
+              const memberSocketId = onlineUsers.get(member.userId._id.toString());
+              console.log(`🔍 Checking user: ${member.userId._id.toString()} | Socket: ${memberSocketId}`);
+
+              if (memberSocketId) {
+                  console.log("📤 Emitting message to:", memberSocketId);
+                  io.to(memberSocketId).emit("receiveCommunityMessage", { senderId, senderName, message });
+              }
+          }
+      });
+
+  } catch (error) {
+      console.error("❌ Error handling community message:", error);
+      socket.emit("errorMessage", { error: "Failed to send community message" });
+  }
+});
   // Handle disconnection
   socket.on("disconnect", () => {
     for (let [userId, socketId] of onlineUsers.entries()) {
@@ -170,6 +171,8 @@ app.use('/api/sponsor', userSponsorRoutes);
 app.use('/api/advertisements', advertisementRoutes);
 app.use("/api/communities", communityRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/search', searchRouter);
+app.use('/api/appointment', appointment);
 // Connect to MongoDB and start server
 const connection = async () => {
   try {

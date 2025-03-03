@@ -36,16 +36,6 @@ exports.getGames = async (req, res) => {
     }
 };
 
-// exports.getGamesPrivate = async (req, res) => {
-//     try {
-//         const games = await Game.find({ createdBy: req.user.id, status:'private' }).sort({ createdAt: -1});
-//         res.status(200).json({ games });
-//     } catch (error) {
-//         console.error('Error fetching games:', error);
-//         res.status(500).json({ message: 'Failed to fetch games.' });
-//     }
-// };
-
 // Get a specific game by ID
 exports.getGameById = async (req, res) => {
     const { gameId } = req.params;
@@ -91,30 +81,6 @@ exports.createPlaylist = async (req, res) => {
         res.status(500).json({ message: 'Failed to create playlist.' });
     }
 };
-
-
-// Create a new playlist under a game
-// exports.createPlaylist = async (req, res) => {
-//     const { title } = req.body;
-//     const { gameId } = req.params;
-
-//     try {
-//         const newPlaylist = new Playlist({
-//             title,
-//             game: gameId,
-//         });
-
-//         await newPlaylist.save();
-
-//         // Update the game to include the new playlist
-//         await Game.findByIdAndUpdate(gameId, { $push: { playlists: newPlaylist._id } });
-
-//         res.status(201).json({ message: 'Playlist created successfully', playlist: newPlaylist });
-//     } catch (error) {
-//         console.error('Error creating playlist:', error);
-//         res.status(500).json({ message: 'Failed to create playlist.' });
-//     }
-// };
 
 exports.addVideoToPlaylist = async (req, res) => {
     const { title } = req.body;
@@ -173,3 +139,31 @@ exports.getPlaylistsInGame = async (req, res) => {
     }
 };
 
+// Delete a game by ID
+exports.deleteGame = async (req, res) => {
+    const { gameId } = req.params;
+    console.log("Delete Game Id : ", gameId);
+
+    try {
+        const game = await Game.findById(gameId);
+        if (!game) {
+            return res.status(404).json({ message: 'Game not found.' });
+        }
+
+        // Ensure only the creator can delete the game
+        // if (game.createdBy.toString() !== req.user.id) {
+        //     return res.status(403).json({ message: 'Unauthorized to delete this game.' });
+        // }
+
+        // Delete all associated playlists
+        await Playlist.deleteMany({ game: gameId });
+
+        // Delete the game
+        await Game.findByIdAndDelete(gameId);
+
+        res.status(200).json({ message: 'Game deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting game:', error);
+        res.status(500).json({ message: 'Failed to delete game.' });
+    }
+};

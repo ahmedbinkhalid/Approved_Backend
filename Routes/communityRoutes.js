@@ -15,4 +15,7 @@ router.post("/join-community", authMiddleware, community.joinCommunity);
 router.get("/get-userCommunities", authMiddleware, community.getUserCommunities);
 router.post("/leave-community", authMiddleware, community.leaveCommunity);
 router.get("/get-messages/:communityId", authMiddleware, community.getCommunityMessages);
+router.post("/send-message/:communityId", authMiddleware, community.sendMessageToCommunity);
+router.delete("/delete-community/:communityId", authMiddleware, community.deleteCommunity);
+
 module.exports = router;

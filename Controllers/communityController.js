@@ -1,24 +1,76 @@
 const Community = require('../Models/community');
 const User = require('../Models/user');
 const communityChat = require("../Models/communityChat");
-// Create a new community (Admin only)
+
 exports.createCommunity = async (req, res) => {
   try {
     const { name, description } = req.body;
     const adminId = req.user.id;
+    const userName = req.user.userName;
+    const profilePicture = req.user.profilePicture;
     const image = req.file ? req.file.location : "defaultCommunityPic.jpg";
 
+    // Check if community with the same name exists
     const existingCommunity = await Community.findOne({ name });
     if (existingCommunity) {
       return res.status(400).json({ message: "Community name already exists" });
     }
 
-    const newCommunity = new Community({ name, description, image, admin: adminId });
+    // Create new community with admin as a member
+    const newCommunity = new Community({ 
+      name, 
+      description, 
+      image, 
+      admin: adminId,
+      members: [{ userId: adminId, userName, profilePicture }] // Automatically add admin as member
+    });
+
     await newCommunity.save();
-    res.status(201).json({message: "Cummnity Created Successfully"});
+
+    // Add community to the user's joined communities
+    await User.findByIdAndUpdate(adminId, { 
+      $addToSet: { joinedCommunities: newCommunity._id }
+    });
+
+    res.status(201).json({ message: "Community Created Successfully and Admin Joined Automatically" });
   } catch (error) {
     console.error("Error creating community:", error);
     res.status(500).json({ message: "Failed to create community" });
+  }
+};
+
+exports.deleteCommunity = async (req, res) => {
+  try {
+    const { communityId } = req.params;
+    const adminId = req.user.id;
+
+    // Find the community
+    const community = await Community.findById(communityId);
+    if (!community) {
+      return res.status(404).json({ message: "Community not found" });
+    }
+
+    // // Check if the requester is the admin
+    // if (community.admin.toString() !== adminId) {
+    //   return res.status(403).json({ message: "Unauthorized: Only the community admin can delete this community" });
+    // }
+
+    // Remove community from all members' joinedCommunities
+    await User.updateMany(
+      { joinedCommunities: communityId },
+      { $pull: { joinedCommunities: communityId } }
+    );
+
+    // Delete all chat messages related to this community
+    await communityChat.deleteMany({ communityId });
+
+    // Delete the community
+    await Community.findByIdAndDelete(communityId);
+
+    res.status(200).json({ message: "Community deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting community:", error);
+    res.status(500).json({ message: "Failed to delete community" });
   }
 };
 
@@ -45,44 +97,6 @@ exports.getAllCommunities = async (req, res, next)=>{
     res.status(500).json({ message: "Failed to fetch communities" });
   }
 };
-
-// // Join a community 
-
-// exports.joinCommunity = async (req, res, next) => {
-//   try {
-//     console.log("Join Community : " , req.body);
-//     const userId = req.user.id;
-//     const userName = req.user.userName ; // Fallback name
-//     const profilePicture = req.user.profilePicture ; // Fallback image
-//     const { communityId } = req.body;
-
-//     if (!userId) {
-//       return res.status(401).json({ message: "Unauthorized: User ID is missing" });
-//     }
-
-//     const community = await Community.findById(communityId);
-//     if (!community) {
-//       return res.status(404).json({ message: "Community not found" });
-//     }
-
-//     // Check if user already exists in the community
-//     if (community.members.some(member => member?.userId?.toString() === userId.toString())) {
-//       return res.status(400).json({ message: "You are already a member of this community" });
-//     }
-
-//     // Add user to members array as an object
-//     community.members.push({ userId, userName, profilePicture });
-//     await community.save();
-
-//     // Add community to user's joined communities
-//     await User.findByIdAndUpdate(userId, { $addToSet: { joinedCommunities: communityId } });
-
-//     res.status(200).json({ message: "Joined community successfully" });
-//   } catch (error) {
-//     console.error("Error joining community:", error);
-//     res.status(500).json({ message: "Failed to join community" });
-//   }
-// };
 
 // Join a community
 exports.joinCommunity = async (req, res) => {
@@ -134,33 +148,6 @@ exports.getUserCommunities = async (req, res, next)=>{
   }
 };
 
-// // Leave a community
-// exports.leaveCommunity = async (req, res) => {
-//   try {
-//     const userId = req.user.id;
-//     const { communityId } = req.body;
-//     console.log("User Id : ", userId);
-//     console.log("Community Id : ", communityId);
-
-//     const community = await Community.findById(communityId);
-//     if (!community) return res.status(404).json({ message: "Community not found" });
-
-//     if (!community.members.includes(userId)) {
-//       return res.status(400).json({ message: "Not a member" });
-//     }
-
-//     community.members = community.members.filter(member => member.toString() !== userId);
-//     await community.save();
-
-//     await User.findByIdAndUpdate(userId, { $pull: { joinedCommunities: communityId } });
-
-//     res.status(200).json({ message: "Left community successfully" });
-//   } catch (error) {
-//     console.error("Error leaving community:", error);
-//     res.status(500).json({ message: "Failed to leave community" });
-//   }
-// };
-
 // Leave a community
 exports.leaveCommunity = async (req, res) => {
   try {
@@ -171,8 +158,7 @@ exports.leaveCommunity = async (req, res) => {
       const userId = req.user.id;
       const { communityId } = req.body;
 
-      console.log("User Id:", userId);
-      console.log("Community Id:", communityId);
+   
 
       const community = await Community.findById(communityId);
       if (!community) {
@@ -204,7 +190,8 @@ exports.getCommunityMessages = async (req, res) => {
   try {
     const { communityId } = req.params;
 
-    const messages = await communityChat.find({ receiverId: communityId })
+    const messages = await communityChat
+      .find({ communityId }) // Fixed incorrect field
       .populate("senderId", "userName profilePicture")
       .sort({ timestamp: 1 });
 
@@ -214,3 +201,51 @@ exports.getCommunityMessages = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch messages" });
   }
 };
+
+
+// Send message to community
+exports.sendMessageToCommunity = async (req, res) => {
+  try {
+    const { communityId } = req.params;
+    const { message } = req.body;
+    const senderId = req.user.id;
+
+    // Validate input
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ message: "Message cannot be empty" });
+    }
+
+    // Check if community exists
+    const community = await Community.findById(communityId);
+    if (!community) {
+      return res.status(404).json({ message: "Community not found" });
+    }
+
+    // Check if sender is a member of the community
+    const isMember = community.members.some(member => member.userId.toString() === senderId);
+    if (!isMember) {
+      return res.status(403).json({ message: "You must be a member of this community to send messages" });
+    }
+
+    // Save message
+    const newMessage = new communityChat({
+      communityId,
+      senderId,
+      senderName: req.user.userName,
+      message
+    });
+
+    await newMessage.save();
+
+    // Emit real-time event via WebSockets (if using Socket.io)
+    if (req.io) {
+      req.io.to(communityId.toString()).emit("newMessage", newMessage);
+    }
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error("Error sending message:", error);
+    res.status(500).json({ message: "Failed to send message" });
+  }
+};
+

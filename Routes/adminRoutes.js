@@ -19,7 +19,7 @@ router.get('/player/:playerId', authMiddleware,adminController.getPlayerDetails)
 
 // Sponsorship Management //  Tier System
 router.post('/sponsorship', authMiddleware, upload.single('image'), adminController.uploadSponsorshipTier);
-router.get('/get-sponsorship', authMiddleware, adminController.getSponsorshipTiers);
+router.get('/get-sponsorship', authMiddleware, adminController.getSponsorshipTiers); // for getting on admin
 router.get("/get-sponsorship/:id", adminController.getSponsorshipTierById); //for detailed view
 
 
@@ -31,7 +31,7 @@ router.post('/advertisement', authMiddleware, upload.single('image'), adminContr
 router.get('/get-advertisement', authMiddleware, adminController.getAdvertisements); // for user
 router.get('/get-coachAdvertisement', authMiddleware, adminController.getAdvertisementsCoach); // for coach
 
-// Delete Advertisement by ID (Only from Database)
+// Delete Advertisement by ID (Only from Database) Banner Ad
 router.delete('/delete-advertisement/:id',authMiddleware ,adminController.deleteAdvertisement);
 
 // get Profile data

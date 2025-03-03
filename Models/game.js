@@ -40,5 +40,6 @@ const gameSchema = new mongoose.Schema({
         default: Date.now,
     },
 });
-
+// Ensure MongoDB is connected before creating the index
+gameSchema.index({ title: 'text', description: 'text' });
 module.exports = mongoose.model('Game', gameSchema);
