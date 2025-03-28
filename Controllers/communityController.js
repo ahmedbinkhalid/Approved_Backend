@@ -39,6 +39,22 @@ exports.createCommunity = async (req, res) => {
   }
 };
 
+// Get community by id
+exports.getCommunityById = async (req, res,next) => {
+    try {
+        const { id } = req.params;
+        const community = await Community.findById(id);
+
+        if (!community) {
+            return res.status(404).json({ message: "Community not found not found" });
+        }
+
+        res.status(200).json({ community });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching community tier" });
+    }
+};
+
 exports.deleteCommunity = async (req, res) => {
   try {
     const { communityId } = req.params;
@@ -71,6 +87,51 @@ exports.deleteCommunity = async (req, res) => {
   } catch (error) {
     console.error("Error deleting community:", error);
     res.status(500).json({ message: "Failed to delete community" });
+  }
+};
+
+// Update//Edit Community Details
+exports.updateCommunity = async (req, res) => {
+  try {
+      const { communityId } = req.params;
+      const { name, description } = req.body;
+      const adminId = req.user.id;
+
+      // Find the community
+      let community = await Community.findById(communityId);
+      if (!community) {
+          return res.status(404).json({ message: "Community not found" });
+      }
+
+      // // Check if the requester is the admin
+      // if (community.admin.toString() !== adminId) {
+      //     return res.status(403).json({ message: "Unauthorized: Only the community admin can update this community" });
+      // }
+
+      // Check if the new name already exists (if changed)
+      if (name && name !== community.name) {
+          const existingCommunity = await Community.findOne({ name });
+          if (existingCommunity) {
+              return res.status(400).json({ message: "Community name already exists" });
+          }
+          community.name = name;
+      }
+
+      // Update other details if provided
+      community.description = description || community.description;
+
+      // If a new image is uploaded, update it
+      if (req.file && req.file.location) {
+          community.image = req.file.location;
+      }
+
+      // Save the updated community
+      await community.save();
+
+      res.status(200).json({ message: "Community updated successfully", community });
+  } catch (error) {
+      console.error("Error updating community:", error);
+      res.status(500).json({ message: "Failed to update community" });
   }
 };
 
@@ -148,6 +209,53 @@ exports.getUserCommunities = async (req, res, next)=>{
   }
 };
 
+const mongoose = require('mongoose');
+
+
+// exports.getUserCommunities = async (req, res, next) => {
+//   try {
+//     const userId = req.user.id;
+
+//     const userCommunities = await User.aggregate([
+//       { $match: { _id: new mongoose.Types.ObjectId(userId) } }, // Match the user
+//       {
+//         $lookup: {
+//           from: "communities", // Make sure this matches your collection name in MongoDB
+//           localField: "joinedCommunities",
+//           foreignField: "_id",
+//           as: "joinedCommunities"
+//         }
+//       },
+//       { $unwind: "$joinedCommunities" }, // Unwind the joinedCommunities array
+//       {
+//         $addFields: {
+//           totalMembers: { $size: "$joinedCommunities.members" } // Count total members
+//         }
+//       },
+//       {
+//         $sort: { "joinedCommunities.createdAt": -1 } // Sort by creation date
+//       },
+//       {
+//         $project: {
+//           _id: "$joinedCommunities._id",
+//           name: "$joinedCommunities.name",
+//           description: "$joinedCommunities.description",
+//           image: "$joinedCommunities.image",
+//           admin: "$joinedCommunities.admin",
+//           totalMembers: 1, // Include the total members count
+//           createdAt: "$joinedCommunities.createdAt"
+//         }
+//       }
+//     ]);
+
+//     res.status(200).json(userCommunities);
+//   } catch (error) {
+//     console.error("Error fetching user communities:", error);
+//     res.status(500).json({ message: "Failed to fetch communities" });
+//   }
+// };
+
+
 // Leave a community
 exports.leaveCommunity = async (req, res) => {
   try {
@@ -192,7 +300,7 @@ exports.getCommunityMessages = async (req, res) => {
 
     const messages = await communityChat
       .find({ communityId }) // Fixed incorrect field
-      .populate("senderId", "userName profilePicture")
+      .populate("senderId", "userName profilePicture role")
       .sort({ timestamp: 1 });
 
     res.status(200).json(messages);

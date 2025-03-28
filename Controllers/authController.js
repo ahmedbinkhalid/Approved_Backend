@@ -103,7 +103,7 @@ exports.forgetPassword = async (req, res, next) => {
 
       // Create the transporter
       const transporter = nodeMailer.createTransport({
-          host: "smtp.gmail.com",
+          host: "smtp.hostinger.com",
           port: 465,
           secure: true,
           auth: {
@@ -143,7 +143,7 @@ exports.forgetPassword = async (req, res, next) => {
 
       // Email options
       const mailOptions = {
-          from: 'SubZero <no-reply@subzero.com>',
+          from: process.env.MAIL_LOGIN,
           to: email,
           subject: 'Password Reset OTP',
           html: htmlContent, // Use the HTML content instead of plain text

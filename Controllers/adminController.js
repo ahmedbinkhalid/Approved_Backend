@@ -173,6 +173,38 @@ exports.uploadSponsorshipTier = async (req, res) => {
     }
 };
 
+// Update Sponsorship Tier by ID
+exports.updateSponsorshipTier = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, description, price, tier } = req.body;
+
+        // Find the existing sponsorship tier
+        let sponsorship = await Sponsorship.findById(id);
+        if (!sponsorship) {
+            return res.status(404).json({ message: "Sponsorship tier not found" });
+        }
+
+        // Update fields if provided
+        sponsorship.title = title || sponsorship.title;
+        sponsorship.description = description || sponsorship.description;
+        sponsorship.price = price ? parseFloat(price) : sponsorship.price;
+        sponsorship.tier = tier || sponsorship.tier;
+
+        // If a new image is uploaded, update it
+        if (req.file && req.file.location) {
+            sponsorship.image = req.file.location;
+        }
+
+        // Save the updated sponsorship tier
+        await sponsorship.save();
+
+        res.status(200).json({ message: "Sponsorship tier updated successfully", sponsorship });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating sponsorship tier", error: error.message });
+    }
+};
+
 
 // Get Sponsorship Tiers
 exports.getSponsorshipTiers = async (req, res) => {
@@ -203,13 +235,14 @@ exports.getSponsorshipTierById = async (req, res) => {
 // Upload Advertisement Banner
 exports.uploadAdvertisement = async (req, res) => {
     try {
-        const { title, description, placement } = req.body;
+        const { title, description, placement, isCommunity } = req.body;
         if (!req.file) return res.status(400).json({ message: "Image is required" });
 
         const advertisement = new Advertisement({
             title,
             description,
             placement,
+            isCommunity,
             image: req.file.location // S3 file URL
         });
 
@@ -217,6 +250,37 @@ exports.uploadAdvertisement = async (req, res) => {
         res.status(201).json({ message: "Advertisement uploaded" });
     } catch (error) {
         res.status(500).json({ message: "Error uploading advertisement", error });
+    }
+};
+// Update Advertisement Banner by ID
+exports.updateAdvertisement = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, description, placement, isCommunity } = req.body;
+
+        // Find the existing advertisement
+        let advertisement = await Advertisement.findById(id);
+        if (!advertisement) {
+            return res.status(404).json({ message: "Advertisement not found" });
+        }
+
+        // Update fields only if provided
+        advertisement.title = title || advertisement.title;
+        advertisement.description = description || advertisement.description;
+        advertisement.placement = placement || advertisement.placement;
+        advertisement.isCommunity = isCommunity || advertisement.isCommunity;
+
+        // If a new image is uploaded, update it
+        if (req.file && req.file.location) {
+            advertisement.image = req.file.location;
+        }
+
+        // Save the updated advertisement
+        await advertisement.save();
+
+        res.status(200).json({ message: "Advertisement updated successfully", advertisement });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating advertisement", error: error.message });
     }
 };
 
@@ -229,6 +293,31 @@ exports.getAdvertisements = async (req, res) => {
         res.status(500).json({ message: "Error fetching advertisements" });
     }
 };
+exports.getAdvertisementsAdmin = async (req, res) => {
+    try {
+        const advertisements = await Advertisement.find();
+        res.status(200).json({ advertisements });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching advertisements" });
+    }
+};
+// Get Advertisement by ID
+exports.getAdervertisementById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const advertisement = await Advertisement.findById(id);
+
+        if (!advertisement) {
+            return res.status(404).json({ message: "advertisement tier not found" });
+        }
+
+        res.status(200).json({ advertisement });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching advertisement tier" });
+    }
+};
+
+
 
 // Get advertisements for coach
 

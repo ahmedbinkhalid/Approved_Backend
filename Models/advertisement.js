@@ -19,6 +19,11 @@ const advertisementSchema = new mongoose.Schema({
         enum: ['user', 'coach', 'both'],
         required: true
     },
+    isCommunity:{
+        type:String,
+        enum: ['Yes', 'No'],
+        required: true
+    },
     createdAt: {
         type: Date,
         default: Date.now

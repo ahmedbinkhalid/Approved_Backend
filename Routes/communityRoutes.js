@@ -8,6 +8,8 @@ const {authMiddleware}= require('../Middlewares/middleware');
 // For Admin
 router.post("/create", authMiddleware, upload.single("image"), community.createCommunity);
 router.get("/admin-communities", authMiddleware, community.getAdminCommunities);
+router.get("/admin-communities/:id", authMiddleware, community.getCommunityById);
+router.put('/update-community/:communityId', authMiddleware, upload.single('image'), community.updateCommunity);
 
 // For Students
 router.get("/get-communities", authMiddleware, community.getAllCommunities);

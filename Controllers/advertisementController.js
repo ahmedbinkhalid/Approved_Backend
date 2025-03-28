@@ -99,3 +99,31 @@ exports.getAllAdRequests = async (req, res) => {
         res.status(500).json({ message: "Error fetching advertisement requests", error });
     }
 };
+
+// Update Sponsorship Request Read Status
+exports.updateSponsorshipRequestReadStatus = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { read } = req.body;
+
+        if (typeof read !== "boolean") {
+            return res.status(400).json({ message: "Invalid read status format" });
+        }
+
+        const request = await AdvertisementRequest.findByIdAndUpdate(
+            requestId,
+            { read },
+            { new: true }
+        );
+
+        if (!request) {
+            return res.status(404).json({ message: "Advertisement request not found" });
+        }
+
+        res.status(200).json({ message: "Read status updated", request });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error updating read status" });
+    }
+};
+

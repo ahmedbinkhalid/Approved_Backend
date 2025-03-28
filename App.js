@@ -27,6 +27,7 @@ const userSponsorRoutes = require('./Routes/userSponsorRoutes');
 const advertisementRoutes = require('./Routes/advertisementRoutes');
 const communityRoutes = require("./Routes/communityRoutes");
 const contactRoutes = require('./Routes/contactRoutes');
+const socialRoutes = require('./Routes/socialLinksRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -173,7 +174,8 @@ app.use("/api/communities", communityRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/search', searchRouter);
 app.use('/api/appointment', appointment);
-// Connect to MongoDB and start server
+app.use('/api/links', socialRoutes);
+
 const connection = async () => {
   try {
     await mongoose.connect(process.env.MongoDB_url);
@@ -187,3 +189,4 @@ const connection = async () => {
 };
 
 connection();
+

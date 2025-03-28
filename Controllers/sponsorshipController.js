@@ -77,40 +77,6 @@ exports.sendSponsorshipRequest = async (req, res) => {
         res.status(500).json({ message: "Error sending sponsorship request" });
     }
 };
-
-// exports.sendSponsorshipRequest = async (req, res) => {
-//     try {
-//         console.log("Tier Request Body : ", req.body);
-//         const { tierId, message } = req.body;
-//         const userId = req.user.id; // From auth middleware
-//         const userName = req.user.userName;
-//         const email = req.user.email;
-
-//         //  Check if the sponsorship tier exists
-//         const tier = await Sponsers.findById(tierId);
-//         console.log("tier" ,tier);
-//         if (!tier) {
-//             return res.status(404).json({ message: "Sponsorship tier not found" });
-//         }
-
-//         // Create the sponsorship request
-//         const newRequest = new SponsorshipRequest({
-//             userId,
-//             userName,
-//             email,
-//             tierId,
-//             tier: tier.tier, // Store tier name (e.g., Bronze, Silver, Gold)
-//             message
-//         });
-
-//         await newRequest.save();
-//         res.status(201).json({ message: "Sponsorship request sent successfully", request: newRequest });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Error sending sponsorship request" });
-//     }
-// };
-
 //  GET API: Fetch all sponsorship requests
 exports.getAllSponsorshipRequests = async (req, res) => {
     try {
@@ -119,5 +85,32 @@ exports.getAllSponsorshipRequests = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error fetching sponsorship requests" });
+    }
+};
+
+// Update Sponsorship Request Read Status
+exports.updateSponsorshipRequestReadStatus = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { read } = req.body;
+
+        if (typeof read !== "boolean") {
+            return res.status(400).json({ message: "Invalid read status format" });
+        }
+
+        const request = await SponsorshipRequest.findByIdAndUpdate(
+            requestId,
+            { read },
+            { new: true }
+        );
+
+        if (!request) {
+            return res.status(404).json({ message: "Sponsorship request not found" });
+        }
+
+        res.status(200).json({ message: "Read status updated", request });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error updating read status" });
     }
 };

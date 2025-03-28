@@ -7,5 +7,7 @@ router.post('/request-advertisement', authMiddleware, advertisementController.cr
 
 // Get all advertisement requests
 router.get('/advertisement-requests', authMiddleware, advertisementController.getAllAdRequests);
+// update read status
+router.put("/update-read-status/:requestId", authMiddleware, advertisementController.updateSponsorshipRequestReadStatus);
 
 module.exports = router;

@@ -22,6 +22,8 @@ router.post('/sponsorship', authMiddleware, upload.single('image'), adminControl
 router.get('/get-sponsorship', authMiddleware, adminController.getSponsorshipTiers); // for getting on admin
 router.get("/get-sponsorship/:id", adminController.getSponsorshipTierById); //for detailed view
 
+//Update/ Edit Sponsorship
+router.put('/update-sponsorship/:id', authMiddleware, upload.single('image'), adminController.updateSponsorshipTier);
 
 // Delete Sponsorship by ID
 router.delete('/delete-sponsorship/:id', authMiddleware, adminController.deleteSponsorship);
@@ -29,10 +31,15 @@ router.delete('/delete-sponsorship/:id', authMiddleware, adminController.deleteS
 // Advertisement Management // Banner Add
 router.post('/advertisement', authMiddleware, upload.single('image'), adminController.uploadAdvertisement);
 router.get('/get-advertisement', authMiddleware, adminController.getAdvertisements); // for user
+router.get('/get-advertisement-admin', authMiddleware, adminController.getAdvertisementsAdmin); // for user
 router.get('/get-coachAdvertisement', authMiddleware, adminController.getAdvertisementsCoach); // for coach
+router.get('/get-advertisement/:id', authMiddleware, adminController.getAdervertisementById); // for user
 
 // Delete Advertisement by ID (Only from Database) Banner Ad
 router.delete('/delete-advertisement/:id',authMiddleware ,adminController.deleteAdvertisement);
+
+//Update/Edit Advertisement
+router.put('/update-advertisement/:id', authMiddleware, upload.single('image'), adminController.updateAdvertisement);
 
 // get Profile data
 router.get('/get-profile', authMiddleware, adminController.getAdminProfile);

@@ -8,5 +8,6 @@ router.get("/get-sponsorship/:id", sponsorshipController.getSponsorshipTierById)
 
 router.post("/send-request", authMiddleware, sponsorshipController.sendSponsorshipRequest);
 router.get("/get-allRequests", authMiddleware, sponsorshipController.getAllSponsorshipRequests); // for admin to get all requests
+router.put("/update-read-status/:requestId", authMiddleware, sponsorshipController.updateSponsorshipRequestReadStatus);
 
 module.exports = router;
